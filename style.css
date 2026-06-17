@@ -1,0 +1,566 @@
+:root {
+  --bg: #f5efe3;
+  --ink: #1f2424;
+  --muted: #63706f;
+  --card: #fffaf0;
+  --line: #dccfb9;
+  --accent: #2f6f73;
+  --accent-strong: #1d5054;
+  --accent-soft: #d7efee;
+  --gold: #d59d2a;
+  --bad: #8f3e37;
+  --shadow: 0 14px 40px rgba(30, 35, 35, 0.12);
+  --radius: 22px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(47, 111, 115, 0.18), transparent 32rem),
+    linear-gradient(180deg, #fbf5e9 0%, var(--bg) 100%);
+}
+
+button {
+  font: inherit;
+  min-height: 48px;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: #fffdf7;
+  color: var(--ink);
+  padding: 0.65rem 0.8rem;
+  box-shadow: 0 3px 0 rgba(31, 36, 36, 0.08);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+button.primary,
+.mode-button.active {
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  color: white;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-shell {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0.15rem;
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  letter-spacing: -0.06em;
+}
+
+.subtitle {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.icon-button {
+  width: 48px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.card {
+  background: rgba(255, 250, 240, 0.92);
+  border: 1px solid rgba(220, 207, 185, 0.9);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.mode-card {
+  padding: 0.8rem 1rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.mode-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.mode-button {
+  font-weight: 850;
+}
+
+.puzzle-card {
+  padding: 1rem;
+}
+
+.puzzle-line {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+#puzzleTitle {
+  margin-bottom: 0.15rem;
+  font-size: 1.35rem;
+}
+
+.rule-line {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.score-pill {
+  min-width: 72px;
+  text-align: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  font-weight: 800;
+}
+
+.progress-bars {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1rem 0;
+}
+
+.progress-row {
+  display: grid;
+  grid-template-columns: 4.7rem 1fr 3.2rem;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.track {
+  height: 12px;
+  background: #eadfca;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 58px;
+  margin: 0.75rem 0;
+  border: 2px dashed var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.current-word {
+  min-height: 1.5em;
+  font-size: clamp(1.8rem, 9vw, 3rem);
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  text-transform: uppercase;
+}
+
+.letter-tiles {
+  --tile-count: 6;
+  display: grid;
+  grid-template-columns: repeat(var(--tile-count), 1fr);
+  gap: 0.45rem;
+  margin: 0.9rem 0;
+}
+
+.tile {
+  min-height: 58px;
+  border-color: #c7b896;
+  background: #fff8dc;
+  font-size: clamp(1.15rem, 6vw, 2.1rem);
+  font-weight: 900;
+}
+
+.tile.used {
+  background: #eee3cf;
+  color: #95866b;
+}
+
+.button-grid {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.primary-actions {
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+}
+
+.secondary-actions {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 0.75rem;
+}
+
+.message {
+  min-height: 1.6em;
+  margin: 0.75rem 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.message.good {
+  color: var(--accent-strong);
+}
+
+.message.bad {
+  color: var(--bad);
+}
+
+
+.celebration-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.celebration-layer.show {
+  opacity: 1;
+}
+
+.celebration-piece,
+.firework-particle,
+.sparkler-dot {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.celebration-piece.confetti {
+  top: -14px;
+  left: var(--x);
+  width: 10px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--piece-color);
+  animation: confettiFall var(--duration) linear var(--delay) forwards;
+}
+
+.celebration-piece.party {
+  top: -42px;
+  left: var(--x);
+  font-size: var(--size);
+  animation: partyFloat var(--duration) ease-out var(--delay) forwards;
+}
+
+.celebration-piece.bubble {
+  bottom: -48px;
+  left: var(--x);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: radial-gradient(circle at 35% 25%, rgba(255,255,255,0.9), rgba(255,255,255,0.16) 34%, rgba(47,111,115,0.22));
+  box-shadow: inset -6px -8px 18px rgba(47, 111, 115, 0.16);
+  animation: bubbleRise var(--duration) ease-in var(--delay) forwards;
+}
+
+.firework-burst {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 0;
+  height: 0;
+}
+
+.firework-particle {
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--piece-color);
+  animation: fireworkPop 900ms ease-out var(--delay) forwards;
+  transform: rotate(var(--angle)) translateX(0);
+}
+
+.sparkler-dot {
+  left: 50%;
+  top: 55%;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--piece-color);
+  box-shadow: 0 0 12px currentColor;
+  color: var(--piece-color);
+  animation: sparklerSpray 760ms ease-out var(--delay) forwards;
+  transform: rotate(var(--angle)) translateX(0);
+}
+
+.celebration-layer::after {
+  content: attr(data-message);
+  position: absolute;
+  left: 50%;
+  top: 20%;
+  transform: translateX(-50%) scale(0.96);
+  max-width: min(86vw, 520px);
+  padding: 0.85rem 1.1rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.95);
+  border: 1px solid rgba(220, 207, 185, 0.95);
+  box-shadow: var(--shadow);
+  color: var(--accent-strong);
+  font-weight: 900;
+  text-align: center;
+  opacity: 0;
+  animation: celebrationToast 2600ms ease forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(112vh) rotate(var(--spin));
+    opacity: 0.9;
+  }
+}
+
+@keyframes partyFloat {
+  0% {
+    transform: translateY(-20px) rotate(-10deg) scale(0.9);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(var(--spin)) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.7);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateY(-112vh) translateX(var(--drift)) scale(1.15);
+    opacity: 0;
+  }
+}
+
+@keyframes fireworkPop {
+  0% {
+    transform: rotate(var(--angle)) translateX(0) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--angle)) translateX(var(--distance)) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes sparklerSpray {
+  0% {
+    transform: rotate(var(--angle)) translateX(0) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(var(--angle)) translateX(var(--distance)) scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes celebrationToast {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.96);
+  }
+  12%, 72% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration-layer.show {
+    opacity: 1;
+  }
+
+  .celebration-piece,
+  .firework-particle,
+  .sparkler-dot {
+    display: none;
+  }
+
+  .celebration-layer::after {
+    animation: celebrationToast 2200ms ease forwards;
+  }
+}
+
+.word-sections {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.word-section {
+  padding: 1rem;
+}
+
+.word-section h3 {
+  margin: 0 0 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 1rem;
+}
+
+.word-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.word-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0.28rem 0.56rem;
+  border-radius: 999px;
+  background: #fffdf7;
+  border: 1px solid var(--line);
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.word-chip.hidden {
+  color: var(--muted);
+  letter-spacing: 0.12em;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.3rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+#offlineBadge.ready::after {
+  content: " ✓";
+}
+
+.help-dialog {
+  width: min(92vw, 460px);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.help-dialog::backdrop {
+  background: rgba(31, 36, 36, 0.42);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 520px) {
+  .primary-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mode-buttons {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .progress-row {
+    grid-template-columns: 4.6rem 1fr 2.8rem;
+  }
+
+  .letter-tiles {
+    gap: 0.35rem;
+  }
+}
