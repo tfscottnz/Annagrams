@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2f6f73">
-  <meta name="description" content="A small offline word game for Ann: choose 4, 5, 6, or 7 letters and make words, with celebratory sparkles.">
+  <meta name="description" content="A small offline word game for Ann: choose 4 to 9 letters, make words, score points, and avoid ads entirely.">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="icon" href="icons/icon-192.png">
@@ -16,7 +16,7 @@
     <header class="topbar">
       <div>
         <h1>Annagrams</h1>
-        <p class="subtitle">Choose your letters. Make words. Zero ads.</p>
+        <p class="subtitle">Make words. Hit the target. Zero ads.</p>
       </div>
       <button id="helpButton" class="icon-button" type="button" aria-label="How to play">?</button>
     </header>
@@ -27,6 +27,12 @@
       <div id="modeButtons" class="mode-buttons" role="group" aria-label="Choose number of letters"></div>
     </section>
 
+    <section class="card mode-card" aria-labelledby="challengeTitle">
+      <p class="eyebrow">Challenge</p>
+      <h2 id="challengeTitle" class="sr-only">Choose challenge level</h2>
+      <div id="difficultyButtons" class="difficulty-buttons" role="group" aria-label="Choose challenge level"></div>
+    </section>
+
     <section class="card puzzle-card" aria-labelledby="puzzleTitle">
       <div class="puzzle-line">
         <div>
@@ -34,7 +40,16 @@
           <h2 id="puzzleTitle">Loading…</h2>
           <p id="puzzleRule" class="rule-line">Make words of three or more letters.</p>
         </div>
-        <div class="score-pill"><span id="foundCount">0</span>/<span id="totalCount">0</span></div>
+        <div class="score-panel" aria-label="Score panel">
+          <span class="score-label">Score</span>
+          <strong><span id="scoreCount">0</span>/<span id="scoreTarget">0</span></strong>
+        </div>
+      </div>
+
+      <div class="summary-grid" aria-label="Puzzle summary">
+        <div><span>Words found</span><strong id="foundSummary">0</strong></div>
+        <div><span>Target groups</span><strong id="targetSummary">0/0</strong></div>
+        <div><span>Accepted words</span><strong id="acceptedSummary">0</strong></div>
       </div>
 
       <div id="progressBars" class="progress-bars" aria-label="Progress by word length"></div>
@@ -56,7 +71,7 @@
 
       <div class="button-grid secondary-actions">
         <button id="hintButton" type="button">Hint</button>
-        <button id="revealButton" type="button">Reveal missing</button>
+        <button id="revealButton" type="button">Reveal accepted words</button>
         <button id="dailyButton" type="button">Today’s puzzle</button>
         <button id="newPuzzleButton" type="button">Another puzzle</button>
       </div>
@@ -72,8 +87,9 @@
 
   <dialog id="helpDialog" class="help-dialog">
     <h2>How to play</h2>
-    <p>Choose 4, 5, 6, or 7 letters. Make words of at least three letters using each tile at most once.</p>
-    <p>The answer list is deliberately small and friendly. If a perfectly good word is missing, blame Terry’s dictionary gremlin, not yourself.</p>
+    <p>Choose 4 to 9 letters. Make words of at least three letters using each tile at most once.</p>
+    <p>You do <strong>not</strong> have to find every accepted word. Hit the score target or the word-length targets to complete the puzzle. Extra words still score points.</p>
+    <p>The answer lists are generated from a filtered English dictionary, with target caps so the game stays kind rather than becoming a lexical excavation pit.</p>
     <div class="dialog-actions">
       <button id="closeHelpButton" class="primary" type="button">Play</button>
     </div>

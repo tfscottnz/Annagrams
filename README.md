@@ -1,25 +1,24 @@
-# Annagrams
+# Annagrams v4
 
-A small offline-friendly word game made for Ann. It has no ads, accounts, trackers, or external JavaScript.
+A small offline-friendly word game for Ann.
 
-## What changed in version 3
+## What changed in v4
 
-- Added a random end-of-puzzle celebration when all words are found: confetti, fireworks, sparklers, party rain, or bubbles.
-- The celebration is made with local CSS and JavaScript only: no libraries, no network calls, no ads.
-- Version 2 improvements are still included.
+- 4-, 5-, 6-, 7-, 8-, and 9-letter modes.
+- Score targets instead of requiring every possible word.
+- Word-length category targets with caps.
+- Gentle, Standard, and Hard challenge levels.
+- Larger generated puzzle pack: 137 puzzles and 8,000+ accepted answers.
+- Continued offline PWA support for Android home-screen installation.
+- Completion celebrations remain local CSS/JavaScript only.
 
-## What changed in version 2
+## How the dictionary works
 
-- Ann can choose 4, 5, 6, or 7 letters.
-- The answer sections and progress bars adapt to the selected puzzle size.
-- There are 78 starter puzzles:
-  - 18 four-letter puzzles
-  - 18 five-letter puzzles
-  - 22 six-letter puzzles
-  - 20 seven-letter puzzles
-- The missing `clean` answer in the CANDLE puzzle has been fixed.
+The bundled `puzzles.json` was generated from a local Hunspell English dictionary derived from SCOWL, then filtered for this game. The phone app does not run a full dictionary engine. It simply loads `puzzles.json`, which keeps the app fast and offline.
 
-## Test locally
+The design is deliberate: the game accepts many valid words but only requires a capped target for each length category. This prevents 8- and 9-letter puzzles from becoming a grim dictionary-mining expedition.
+
+## Testing locally
 
 From inside this folder:
 
@@ -33,35 +32,41 @@ Then open:
 http://localhost:8000
 ```
 
-Do not just double-click `index.html`; install/offline features need a local web server or HTTPS.
+## Updating GitHub
 
-## Put it on an Android phone
+From your local repository folder, copy/replace these files from this v4 folder:
 
-1. Upload these files to a GitHub repository.
-2. Enable GitHub Pages from the repository settings.
-3. Open the GitHub Pages URL in Chrome on Android.
-4. Tap the three-dot menu.
-5. Tap **Add to Home screen** or **Install app**.
-6. Open the app once while online so the offline cache can fill.
+```text
+index.html
+style.css
+game.js
+puzzles.json
+manifest.json
+service-worker.js
+icons/
+README.md
+.nojekyll
+tools/
+docs/
+```
 
-## Updating an existing install
+Then run:
 
-If Ann already installed the first version and it does not update straight away:
+```bash
+git status
+git add .
+git commit -m "Update Annagrams to v4"
+git push
+```
 
-1. Open the game in Chrome.
-2. Refresh it twice.
-3. Reopen it from the home screen.
+The GitHub Pages site should update after the push. If Android still shows the old version, open the site in Chrome, refresh twice, then reopen the home-screen app. If necessary, remove and reinstall the home-screen icon.
 
-If the old version is stubborn, remove the home-screen icon and install it again from the GitHub Pages URL.
+## Dictionary regeneration
 
-## Editing puzzles
+If you have a Hunspell dictionary installed, you can regenerate `puzzles.json`:
 
-Puzzle data lives in `puzzles.json`. Each puzzle has:
+```bash
+python3 tools/generate_puzzles.py /usr/share/hunspell/en_US.dic > puzzles.json
+```
 
-- `id`: unique puzzle id
-- `title`: display name
-- `letters`: the available letters
-- `size`: the number of letters
-- `answers`: accepted answers
-
-The game filters invalid answers at load time, but it is still best to keep `puzzles.json` tidy.
+The generation script is intentionally simple and inspectable.

@@ -1,0 +1,27 @@
+Annagrams v4 dictionary notice
+==============================
+
+The generated puzzle answer lists in puzzles.json were produced from a local
+Hunspell English dictionary package installed on the build system. That package
+identifies its source as SCOWL: Spell Checker Oriented Word Lists, maintained by
+Kevin Atkinson.
+
+Relevant permission notice from the Debian hunspell-en-us copyright file:
+
+  The collective work is Copyright 2000-2011 by Kevin Atkinson as well
+  as any of the copyrights mentioned below:
+
+    Copyright 2000-2011 by Kevin Atkinson
+
+    Permission to use, copy, modify, distribute and sell these word
+    lists, the associated scripts, the output created from the scripts,
+    and its documentation for any purpose is hereby granted without fee,
+    provided that the above copyright notice appears in all copies and
+    that both that copyright notice and this permission notice appear in
+    supporting documentation. Kevin Atkinson makes no representations
+    about the suitability of this array for any purpose. It is provided
+    "as is" without express or implied warranty.
+
+This application includes a filtered/generated puzzle output, not the complete
+system dictionary. The filter is designed for a friendly private word game and
+should not be treated as a general-purpose English dictionary.

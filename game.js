@@ -1,14 +1,18 @@
 const els = {
   title: document.getElementById('puzzleTitle'),
   rule: document.getElementById('puzzleRule'),
-  foundCount: document.getElementById('foundCount'),
-  totalCount: document.getElementById('totalCount'),
+  scoreCount: document.getElementById('scoreCount'),
+  scoreTarget: document.getElementById('scoreTarget'),
+  foundSummary: document.getElementById('foundSummary'),
+  targetSummary: document.getElementById('targetSummary'),
+  acceptedSummary: document.getElementById('acceptedSummary'),
   progressBars: document.getElementById('progressBars'),
   currentWord: document.getElementById('currentWord'),
   letterTiles: document.getElementById('letterTiles'),
   message: document.getElementById('message'),
   wordSections: document.getElementById('wordSections'),
   modeButtons: document.getElementById('modeButtons'),
+  difficultyButtons: document.getElementById('difficultyButtons'),
   submit: document.getElementById('submitButton'),
   backspace: document.getElementById('backspaceButton'),
   clear: document.getElementById('clearButton'),
@@ -24,40 +28,42 @@ const els = {
   celebrationLayer: document.getElementById('celebrationLayer')
 };
 
-const STORAGE_PREFIX = 'annagrams-progress-v2:';
-const SIZE_STORAGE_KEY = 'annagrams-selected-size-v2';
+const STORAGE_PREFIX = 'annagrams-progress-v4:';
+const SIZE_STORAGE_KEY = 'annagrams-selected-size-v4';
+const DIFFICULTY_STORAGE_KEY = 'annagrams-difficulty-v4';
 const MIN_WORD_LENGTH = 3;
+const POINTS = { 3: 1, 4: 2, 5: 4, 6: 7, 7: 11, 8: 16, 9: 25 };
+const DIFFICULTIES = {
+  gentle: { label: 'Gentle', targetScale: 0.72, scoreScale: 0.72, note: 'lower targets' },
+  standard: { label: 'Standard', targetScale: 1, scoreScale: 1, note: 'balanced' },
+  hard: { label: 'Hard', targetScale: 1.28, scoreScale: 1.28, note: 'higher targets' }
+};
+
 let puzzles = [];
 let puzzle = null;
 let selectedSize = Number(localStorage.getItem(SIZE_STORAGE_KEY)) || 6;
+let difficultyKey = localStorage.getItem(DIFFICULTY_STORAGE_KEY) || 'standard';
 let answerSet = new Set();
 let found = new Set();
 let revealMissing = false;
+let completedDifficulties = new Set();
 let tiles = [];
 let current = [];
 let hintCount = 0;
-
 let celebrationTimer = null;
 
 const CELEBRATION_MESSAGES = [
-  'All words found. Splendid!',
-  'Puzzle complete. Tiny fireworks deployed!',
-  'The word-garden is harvested!',
-  'A full set. Ann wins the alphabet!',
-  'Complete. The letters surrender!'
+  'Target reached. Tiny fireworks deployed!',
+  'Puzzle complete. The letters salute!',
+  'Score target hit. Excellent word-work!',
+  'Category targets conquered!',
+  'Ann wins the alphabet!'
 ];
-
 const CELEBRATION_TYPES = ['confetti', 'fireworks', 'sparklers', 'party', 'bubbles'];
 const CELEBRATION_COLOURS = ['#2f6f73', '#d59d2a', '#c76545', '#7f5aa2', '#3f7fb7', '#e7c766', '#f28ab2'];
 
-function randomChoice(items) {
-  return items[Math.floor(Math.random() * items.length)];
-}
-
-function randomBetween(min, max) {
-  return min + Math.random() * (max - min);
-}
-
+function randomChoice(items) { return items[Math.floor(Math.random() * items.length)]; }
+function randomBetween(min, max) { return min + Math.random() * (max - min); }
 function clearCelebration() {
   if (!els.celebrationLayer) return;
   window.clearTimeout(celebrationTimer);
@@ -65,7 +71,6 @@ function clearCelebration() {
   els.celebrationLayer.removeAttribute('data-message');
   els.celebrationLayer.innerHTML = '';
 }
-
 function addPiece(className, styles = {}, text = '') {
   const piece = document.createElement('span');
   piece.className = className;
@@ -74,44 +79,34 @@ function addPiece(className, styles = {}, text = '') {
   els.celebrationLayer.appendChild(piece);
   return piece;
 }
-
 function makeConfetti() {
   for (let i = 0; i < 88; i++) {
     addPiece('celebration-piece confetti', {
-      '--x': `${randomBetween(0, 100)}vw`,
-      '--delay': `${randomBetween(0, 0.75)}s`,
-      '--duration': `${randomBetween(2.1, 3.7)}s`,
-      '--spin': `${randomBetween(240, 980)}deg`,
+      '--x': `${randomBetween(0, 100)}vw`, '--delay': `${randomBetween(0, 0.75)}s`,
+      '--duration': `${randomBetween(2.1, 3.7)}s`, '--spin': `${randomBetween(240, 980)}deg`,
       '--piece-color': randomChoice(CELEBRATION_COLOURS)
     });
   }
 }
-
 function makePartyRain() {
   const icons = ['🎉', '✨', '⭐', '🥳', '🎈', '🌟'];
   for (let i = 0; i < 42; i++) {
     addPiece('celebration-piece party', {
-      '--x': `${randomBetween(0, 96)}vw`,
-      '--delay': `${randomBetween(0, 0.65)}s`,
-      '--duration': `${randomBetween(2.2, 3.6)}s`,
-      '--spin': `${randomBetween(-220, 220)}deg`,
+      '--x': `${randomBetween(0, 96)}vw`, '--delay': `${randomBetween(0, 0.65)}s`,
+      '--duration': `${randomBetween(2.2, 3.6)}s`, '--spin': `${randomBetween(-220, 220)}deg`,
       '--size': `${randomBetween(1.2, 2.2)}rem`
     }, randomChoice(icons));
   }
 }
-
 function makeBubbles() {
   for (let i = 0; i < 44; i++) {
     addPiece('celebration-piece bubble', {
-      '--x': `${randomBetween(0, 96)}vw`,
-      '--delay': `${randomBetween(0, 0.9)}s`,
-      '--duration': `${randomBetween(2.2, 4.3)}s`,
-      '--size': `${randomBetween(18, 54)}px`,
+      '--x': `${randomBetween(0, 96)}vw`, '--delay': `${randomBetween(0, 0.9)}s`,
+      '--duration': `${randomBetween(2.2, 4.3)}s`, '--size': `${randomBetween(18, 54)}px`,
       '--drift': `${randomBetween(-80, 80)}px`
     });
   }
 }
-
 function makeFireworks() {
   for (let burst = 0; burst < 7; burst++) {
     const holder = document.createElement('span');
@@ -132,43 +127,32 @@ function makeFireworks() {
     }
   }
 }
-
 function makeSparklers() {
-  const rays = 110;
-  for (let i = 0; i < rays; i++) {
+  for (let i = 0; i < 110; i++) {
     addPiece('sparkler-dot', {
-      '--angle': `${randomBetween(0, 360)}deg`,
-      '--distance': `${randomBetween(60, 260)}px`,
-      '--delay': `${randomBetween(0, 0.85)}s`,
-      '--piece-color': randomChoice(['#fff6a5', '#ffd166', '#ffffff', '#d59d2a'])
+      '--angle': `${randomBetween(0, 360)}deg`, '--distance': `${randomBetween(60, 260)}px`,
+      '--delay': `${randomBetween(0, 0.85)}s`, '--piece-color': randomChoice(['#fff6a5', '#ffd166', '#ffffff', '#d59d2a'])
     });
   }
 }
-
 function launchCelebration() {
-  if (!els.celebrationLayer) return;
   clearCelebration();
   const type = randomChoice(CELEBRATION_TYPES);
-  const message = randomChoice(CELEBRATION_MESSAGES);
-  els.celebrationLayer.dataset.message = message;
+  els.celebrationLayer.dataset.message = randomChoice(CELEBRATION_MESSAGES);
   els.celebrationLayer.className = `celebration-layer show ${type}`;
-
   if (type === 'confetti') makeConfetti();
   else if (type === 'fireworks') makeFireworks();
   else if (type === 'sparklers') makeSparklers();
   else if (type === 'bubbles') makeBubbles();
   else makePartyRain();
-
   celebrationTimer = window.setTimeout(clearCelebration, 4300);
 }
 
 function todayIndex(count) {
   const today = new Date();
   const stamp = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  const day = Math.floor(stamp / 86400000);
-  return ((day % count) + count) % count;
+  return ((Math.floor(stamp / 86400000) % count) + count) % count;
 }
-
 function shuffleArray(items) {
   const arr = [...items];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -177,15 +161,8 @@ function shuffleArray(items) {
   }
   return arr;
 }
-
-function normaliseWord(word) {
-  return word.trim().toLowerCase();
-}
-
-function puzzleSize(item) {
-  return Number(item.size || item.letters.length);
-}
-
+function normaliseWord(word) { return word.trim().toLowerCase(); }
+function puzzleSize(item) { return Number(item.size || item.letters.length); }
 function canBuildFromLetters(word, letters) {
   const counts = {};
   for (const ch of letters.toLowerCase()) counts[ch] = (counts[ch] || 0) + 1;
@@ -195,7 +172,6 @@ function canBuildFromLetters(word, letters) {
   }
   return true;
 }
-
 function lengthsForCurrentPuzzle() {
   if (!puzzle) return [];
   const max = puzzleSize(puzzle);
@@ -203,40 +179,75 @@ function lengthsForCurrentPuzzle() {
   for (let len = MIN_WORD_LENGTH; len <= max; len++) lengths.push(len);
   return lengths;
 }
-
 function groupedAnswers() {
   const groups = {};
   for (const len of lengthsForCurrentPuzzle()) groups[len] = [];
-  for (const word of puzzle.answers) {
-    if (groups[word.length]) groups[word.length].push(word);
-  }
+  for (const word of puzzle.answers) if (groups[word.length]) groups[word.length].push(word);
   for (const len of Object.keys(groups)) groups[len].sort();
   return groups;
 }
-
-function puzzlesForSize(size) {
-  return puzzles.filter(item => puzzleSize(item) === size);
-}
-
-function availableSizes() {
-  return [...new Set(puzzles.map(puzzleSize))].sort((a, b) => a - b);
-}
-
+function puzzlesForSize(size) { return puzzles.filter(item => puzzleSize(item) === size); }
+function availableSizes() { return [...new Set(puzzles.map(puzzleSize))].sort((a, b) => a - b); }
 function dailyPuzzleForSize(size) {
   const list = puzzlesForSize(size);
   return list[todayIndex(list.length)] || puzzles[0];
 }
-
+function baseTargets() {
+  const result = {};
+  for (const [len, count] of Object.entries(puzzle.targets || {})) result[Number(len)] = Number(count);
+  return result;
+}
+function targetsForDifficulty() {
+  const scale = DIFFICULTIES[difficultyKey].targetScale;
+  const groups = groupedAnswers();
+  const result = {};
+  for (const len of lengthsForCurrentPuzzle()) {
+    const available = groups[len].length;
+    const base = baseTargets()[len] || 0;
+    if (!available || !base) continue;
+    result[len] = Math.max(1, Math.min(available, Math.round(base * scale)));
+  }
+  return result;
+}
+function scoreTargetForDifficulty() {
+  return Math.max(10, Math.round(Number(puzzle.scoreTarget || 10) * DIFFICULTIES[difficultyKey].scoreScale));
+}
+function wordPoints(word) {
+  const len = word.length;
+  let points = POINTS[len] || len;
+  if (len === puzzle.size && puzzle.size >= 6) points += 20;
+  if (len === 9) points += 30;
+  return points;
+}
+function currentScore() { return [...found].reduce((total, word) => total + wordPoints(word), 0); }
+function targetGroupsMet() {
+  const groups = groupedAnswers();
+  const targets = targetsForDifficulty();
+  let met = 0;
+  let total = 0;
+  for (const len of Object.keys(targets)) {
+    total += 1;
+    const got = groups[len].filter(word => found.has(word)).length;
+    if (got >= targets[len]) met += 1;
+  }
+  return { met, total };
+}
+function allTargetsMet() {
+  const summary = targetGroupsMet();
+  return summary.total > 0 && summary.met === summary.total;
+}
+function hasCompletedCurrentDifficulty() { return completedDifficulties.has(difficultyKey); }
+function isCompleteNow() { return currentScore() >= scoreTargetForDifficulty() || allTargetsMet(); }
 function saveProgress() {
   if (!puzzle) return;
-  const data = { found: [...found], hintCount, revealMissing };
+  const data = { found: [...found], hintCount, revealMissing, completedDifficulties: [...completedDifficulties] };
   localStorage.setItem(STORAGE_PREFIX + puzzle.id, JSON.stringify(data));
 }
-
 function loadProgress() {
   found = new Set();
   revealMissing = false;
   hintCount = 0;
+  completedDifficulties = new Set();
   try {
     const raw = localStorage.getItem(STORAGE_PREFIX + puzzle.id);
     if (!raw) return;
@@ -244,25 +255,18 @@ function loadProgress() {
     found = new Set((data.found || []).filter(word => answerSet.has(word)));
     hintCount = Number(data.hintCount || 0);
     revealMissing = Boolean(data.revealMissing);
+    completedDifficulties = new Set(data.completedDifficulties || []);
   } catch (_) {
     found = new Set();
   }
 }
-
 function preparePuzzle(nextPuzzle) {
   const size = puzzleSize(nextPuzzle);
   const answers = [...new Set(nextPuzzle.answers.map(normaliseWord))]
     .filter(word => word.length >= MIN_WORD_LENGTH && word.length <= size && canBuildFromLetters(word, nextPuzzle.letters))
     .sort((a, b) => a.length - b.length || a.localeCompare(b));
-
-  return {
-    ...nextPuzzle,
-    size,
-    letters: nextPuzzle.letters.toUpperCase(),
-    answers
-  };
+  return { ...nextPuzzle, size, letters: nextPuzzle.letters.toUpperCase(), answers };
 }
-
 function setPuzzle(nextPuzzle, message = '') {
   puzzle = preparePuzzle(nextPuzzle);
   selectedSize = puzzle.size;
@@ -277,12 +281,19 @@ function setPuzzle(nextPuzzle, message = '') {
 
 function render() {
   if (!puzzle) return;
+  const score = currentScore();
+  const scoreTarget = scoreTargetForDifficulty();
+  const targetSummary = targetGroupsMet();
   els.title.textContent = `${puzzle.title} · ${puzzle.size} letters`;
-  els.rule.textContent = `Make words of 3 to ${puzzle.size} letters. Use each tile at most once.`;
-  els.foundCount.textContent = found.size;
-  els.totalCount.textContent = puzzle.answers.length;
+  els.rule.textContent = `Make words of 3 to ${puzzle.size} letters. Complete by score or by category targets.`;
+  els.scoreCount.textContent = score;
+  els.scoreTarget.textContent = scoreTarget;
+  els.foundSummary.textContent = found.size;
+  els.targetSummary.textContent = `${targetSummary.met}/${targetSummary.total}`;
+  els.acceptedSummary.textContent = puzzle.answers.length;
   els.currentWord.textContent = current.map(t => t.letter).join('');
   renderModeButtons();
+  renderDifficultyButtons();
   renderTiles();
   renderProgress();
   renderWordSections();
@@ -290,7 +301,6 @@ function render() {
   els.backspace.disabled = current.length === 0;
   els.clear.disabled = current.length === 0;
 }
-
 function renderModeButtons() {
   els.modeButtons.innerHTML = '';
   for (const size of availableSizes()) {
@@ -298,14 +308,26 @@ function renderModeButtons() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'mode-button' + (size === selectedSize ? ' active' : '');
-    button.textContent = `${size} letters`;
+    button.textContent = `${size}`;
+    button.setAttribute('aria-label', `${size} letters`);
     button.setAttribute('aria-pressed', String(size === selectedSize));
     button.title = `${count} puzzles`;
     button.addEventListener('click', () => chooseSize(size));
     els.modeButtons.appendChild(button);
   }
 }
-
+function renderDifficultyButtons() {
+  els.difficultyButtons.innerHTML = '';
+  for (const [key, config] of Object.entries(DIFFICULTIES)) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'difficulty-button' + (key === difficultyKey ? ' active' : '');
+    button.innerHTML = `${config.label}<br><small>${config.note}</small>`;
+    button.setAttribute('aria-pressed', String(key === difficultyKey));
+    button.addEventListener('click', () => chooseDifficulty(key));
+    els.difficultyButtons.appendChild(button);
+  }
+}
 function renderTiles() {
   els.letterTiles.innerHTML = '';
   els.letterTiles.style.setProperty('--tile-count', String(puzzle.size));
@@ -320,51 +342,69 @@ function renderTiles() {
     els.letterTiles.appendChild(button);
   }
 }
-
 function renderProgress() {
   const groups = groupedAnswers();
+  const targets = targetsForDifficulty();
   els.progressBars.innerHTML = '';
   for (const len of lengthsForCurrentPuzzle()) {
-    const total = groups[len].length;
+    const available = groups[len].length;
+    const target = targets[len] || 0;
+    if (!available || !target) continue;
     const got = groups[len].filter(word => found.has(word)).length;
+    const capped = Math.min(got, target);
+    const width = target ? Math.min(100, (capped / target) * 100) : 0;
     const row = document.createElement('div');
-    row.className = 'progress-row';
+    row.className = 'progress-row' + (got >= target ? ' complete' : '');
     row.innerHTML = `
       <strong>${len} letters</strong>
-      <span class="track"><span class="fill" style="width: ${total ? (got / total) * 100 : 0}%"></span></span>
-      <span>${got}/${total}</span>
+      <span class="track"><span class="fill${got > target ? ' bonus' : ''}" style="width: ${width}%"></span></span>
+      <span>${got}/${target}</span>
     `;
     els.progressBars.appendChild(row);
   }
 }
-
 function renderWordSections() {
   const groups = groupedAnswers();
+  const targets = targetsForDifficulty();
   els.wordSections.innerHTML = '';
   for (const len of lengthsForCurrentPuzzle()) {
+    const available = groups[len].length;
+    if (!available) continue;
+    const target = targets[len] || 0;
+    const foundWords = groups[len].filter(word => found.has(word));
     const section = document.createElement('section');
     section.className = 'card word-section';
-    const got = groups[len].filter(word => found.has(word)).length;
-    section.innerHTML = `<h3><span>${len}-letter words</span><span>${got}/${groups[len].length}</span></h3>`;
+    section.innerHTML = `<h3><span>${len}-letter words</span><span>${foundWords.length}/${target || available}</span></h3>`;
+    const note = document.createElement('p');
+    note.className = 'section-note';
+    note.textContent = target ? `${available} accepted. Target: ${target}.` : `${available} accepted. Bonus category.`;
+    section.appendChild(note);
     const list = document.createElement('div');
     list.className = 'word-list';
-    for (const word of groups[len]) {
+    const wordsToShow = revealMissing ? groups[len] : foundWords;
+    if (wordsToShow.length === 0) {
       const chip = document.createElement('span');
-      const show = found.has(word) || revealMissing;
-      chip.className = 'word-chip' + (show ? '' : ' hidden');
-      chip.textContent = show ? word : '•'.repeat(len);
+      chip.className = 'word-chip hidden';
+      chip.textContent = '•'.repeat(len);
       list.appendChild(chip);
+    } else {
+      for (const word of wordsToShow) {
+        const chip = document.createElement('span');
+        const foundClass = found.has(word) ? ' points' : '';
+        chip.className = 'word-chip' + foundClass;
+        chip.textContent = word;
+        chip.title = `${wordPoints(word)} points`;
+        list.appendChild(chip);
+      }
     }
     section.appendChild(list);
     els.wordSections.appendChild(section);
   }
 }
-
 function setMessage(text, kind = '') {
   els.message.textContent = text;
   els.message.className = 'message' + (kind ? ` ${kind}` : '');
 }
-
 function chooseTile(index) {
   const tile = tiles.find(t => t.index === index);
   if (!tile || tile.used) return;
@@ -372,90 +412,93 @@ function chooseTile(index) {
   current.push(tile);
   render();
 }
-
 function clearCurrent() {
   for (const tile of current) tile.used = false;
   current = [];
   render();
 }
-
 function backspace() {
   const tile = current.pop();
   if (tile) tile.used = false;
   render();
 }
-
 function submitCurrent() {
   const word = normaliseWord(current.map(t => t.letter).join(''));
-  if (word.length < MIN_WORD_LENGTH) {
-    setMessage('Words need at least three letters.', 'bad');
-    return;
-  }
-  if (!answerSet.has(word)) {
-    setMessage(`“${word.toUpperCase()}” is not in this puzzle.`, 'bad');
-    return;
-  }
-  if (found.has(word)) {
-    setMessage(`Already found: ${word.toUpperCase()}.`, 'bad');
-    clearCurrent();
-    return;
-  }
+  if (word.length < MIN_WORD_LENGTH) { setMessage('Words need at least three letters.', 'bad'); return; }
+  if (!answerSet.has(word)) { setMessage(`“${word.toUpperCase()}” is not accepted in this puzzle.`, 'bad'); return; }
+  if (found.has(word)) { setMessage(`Already found: ${word.toUpperCase()}.`, 'bad'); clearCurrent(); return; }
+
+  const wasComplete = hasCompletedCurrentDifficulty() || isCompleteNow();
   found.add(word);
   clearCurrent();
-  saveProgress();
-  if (found.size === puzzle.answers.length) {
-    setMessage('Complete! The whole word-garden is harvested.', 'good');
+  const points = wordPoints(word);
+  const score = currentScore();
+  const target = scoreTargetForDifficulty();
+  if (!wasComplete && isCompleteNow()) {
+    completedDifficulties.add(difficultyKey);
+    saveProgress();
+    render();
+    setMessage(`Target reached with ${word.toUpperCase()}! Score ${score}/${target}.`, 'good');
     launchCelebration();
-  } else if (word.length === puzzle.size) {
-    setMessage(`Lovely: ${word.toUpperCase()} is a full-length word.`, 'good');
-  } else {
-    setMessage(`Good word: ${word.toUpperCase()}.`, 'good');
+    return;
   }
+  saveProgress();
+  if (word.length === puzzle.size) setMessage(`Full-length word: ${word.toUpperCase()}! +${points} points.`, 'good');
+  else setMessage(`Good word: ${word.toUpperCase()}. +${points} points.`, 'good');
   render();
 }
-
 function shuffleTiles() {
   const unusedLetters = tiles.filter(t => !t.used).map(t => t.letter);
   const shuffled = shuffleArray(unusedLetters);
   let k = 0;
-  for (const tile of tiles) {
-    if (!tile.used) tile.letter = shuffled[k++];
-  }
+  for (const tile of tiles) if (!tile.used) tile.letter = shuffled[k++];
   render();
 }
-
 function giveHint() {
-  const missing = puzzle.answers.filter(word => !found.has(word));
-  if (!missing.length) {
-    setMessage('No hints left. You have found everything.', 'good');
-    return;
+  const targets = targetsForDifficulty();
+  const groups = groupedAnswers();
+  let pool = [];
+  for (const len of Object.keys(targets).map(Number).sort((a, b) => b - a)) {
+    const missing = groups[len].filter(word => !found.has(word));
+    const got = groups[len].filter(word => found.has(word)).length;
+    if (missing.length && got < targets[len]) { pool = missing; break; }
   }
-  const longest = missing.filter(word => word.length === puzzle.size);
-  const pool = longest.length ? longest : missing;
-  const word = pool[Math.floor(Math.random() * pool.length)];
+  if (!pool.length) pool = puzzle.answers.filter(word => !found.has(word));
+  if (!pool.length) { setMessage('No hints left. You have found every accepted word.', 'good'); return; }
+  const word = randomChoice(pool);
   hintCount += 1;
   saveProgress();
   setMessage(`Hint ${hintCount}: ${word.length} letters, starts with ${word[0].toUpperCase()}.`, 'good');
 }
-
 function revealAll() {
   revealMissing = true;
   saveProgress();
   render();
-  setMessage('Missing words revealed.', 'good');
+  setMessage('Accepted words revealed. No shame, just data for next round.', 'good');
 }
-
 function chooseSize(size) {
   const next = dailyPuzzleForSize(size);
   setPuzzle(next, `${size}-letter mode selected. Today’s ${size}-letter puzzle is ready.`);
 }
-
+function chooseDifficulty(key) {
+  difficultyKey = key;
+  localStorage.setItem(DIFFICULTY_STORAGE_KEY, difficultyKey);
+  render();
+  const label = DIFFICULTIES[key].label;
+  if (!hasCompletedCurrentDifficulty() && isCompleteNow()) {
+    completedDifficulties.add(difficultyKey);
+    saveProgress();
+    setMessage(`${label} target already reached for this puzzle.`, 'good');
+    launchCelebration();
+  } else {
+    setMessage(`${label} challenge selected.`, 'good');
+  }
+}
 function pickRandomPuzzle() {
   const choices = puzzlesForSize(selectedSize).filter(p => !puzzle || p.id !== puzzle.id);
   const next = choices[Math.floor(Math.random() * choices.length)] || dailyPuzzleForSize(selectedSize);
   setPuzzle(next, `Another ${selectedSize}-letter puzzle: ${next.title}.`);
 }
-
 async function loadPuzzles() {
   const response = await fetch('puzzles.json', { cache: 'no-cache' });
   if (!response.ok) throw new Error(`Could not load puzzles: ${response.status}`);
@@ -464,9 +507,9 @@ async function loadPuzzles() {
   puzzles = puzzles.map(preparePuzzle).filter(p => p.answers.length > 0);
   const sizes = availableSizes();
   if (!sizes.includes(selectedSize)) selectedSize = sizes.includes(6) ? 6 : sizes[0];
+  if (!DIFFICULTIES[difficultyKey]) difficultyKey = 'standard';
   setPuzzle(dailyPuzzleForSize(selectedSize), `Today’s ${selectedSize}-letter puzzle is ready.`);
 }
-
 function wireEvents() {
   els.submit.addEventListener('click', submitCurrent);
   els.backspace.addEventListener('click', backspace);
@@ -491,7 +534,6 @@ function wireEvents() {
     }
   });
 }
-
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   try {
