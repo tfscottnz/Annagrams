@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2f6f73">
-  <meta name="description" content="A small offline word game for Ann: choose 4 to 9 letters, make words, score points, and avoid ads entirely.">
+  <meta name="description" content="A small offline word game for Ann: choose 4 to 9 letters, make words, score points, tap found words for definitions, and avoid ads entirely.">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="icon" href="icons/icon-192.png">
@@ -90,8 +90,21 @@
     <p>Choose 4 to 9 letters. Make words of at least three letters using each tile at most once.</p>
     <p>You do <strong>not</strong> have to find every accepted word. Hit the score target or the word-length targets to complete the puzzle. Extra words still score points.</p>
     <p>The answer lists are generated from a filtered English dictionary, with target caps so the game stays kind rather than becoming a lexical excavation pit.</p>
+    <p>Tap a found or revealed word to look up a definition. Definition lookup uses the internet only when you ask for it.</p>
     <div class="dialog-actions">
       <button id="closeHelpButton" class="primary" type="button">Play</button>
+    </div>
+  </dialog>
+
+  <dialog id="definitionDialog" class="definition-dialog">
+    <div class="definition-header">
+      <h2 id="definitionTitle">Definition</h2>
+      <button id="closeDefinitionButton" class="icon-button" type="button" aria-label="Close definition">×</button>
+    </div>
+    <div id="definitionBody" class="definition-body" aria-live="polite"></div>
+    <div class="dialog-actions">
+      <a id="definitionExternalLink" class="button-link" href="#" target="_blank" rel="noopener noreferrer">Open in Wiktionary</a>
+      <button id="definitionDoneButton" class="primary" type="button">Done</button>
     </div>
   </dialog>
 

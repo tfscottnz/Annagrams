@@ -142,3 +142,37 @@ h1 { margin-bottom: 0.15rem; font-size: clamp(2rem, 8vw, 3.2rem); letter-spacing
   .letter-tiles { gap: 0.32rem; }
   .tile { min-height: 50px; padding-left: 0.25rem; padding-right: 0.25rem; }
 }
+
+.word-chip-button {
+  box-shadow: none;
+  cursor: pointer;
+}
+.word-chip-button:hover,
+.word-chip-button:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(47, 111, 115, 0.22);
+  outline-offset: 2px;
+}
+.definition-dialog {
+  width: min(92vw, 560px);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.definition-dialog::backdrop { background: rgba(31, 36, 36, 0.42); }
+.definition-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+.definition-header h2 { margin-bottom: 0; letter-spacing: 0.03em; }
+.definition-body { display: grid; gap: 0.8rem; max-height: min(58vh, 520px); overflow: auto; padding-right: 0.15rem; }
+.definition-group { border: 1px solid var(--line); border-radius: 18px; padding: 0.75rem 0.9rem; background: rgba(255, 255, 255, 0.38); }
+.definition-group h3 { margin: 0 0 0.45rem; color: var(--accent-strong); text-transform: capitalize; }
+.definition-group ol { margin: 0; padding-left: 1.35rem; }
+.definition-group li { margin-bottom: 0.55rem; }
+.definition-example { margin: 0.25rem 0 0; color: var(--muted); font-size: 0.92rem; }
+.definition-note { margin: 0; font-weight: 760; }
+.definition-small { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.button-link { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border: 2px solid var(--line); border-radius: 16px; background: #fffdf7; color: var(--ink); padding: 0.65rem 0.8rem; text-decoration: none; font-weight: 760; }
+.button-link:focus-visible { outline: 2px solid rgba(47, 111, 115, 0.28); outline-offset: 2px; }
+.dialog-actions { gap: 0.65rem; align-items: center; flex-wrap: wrap; }

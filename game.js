@@ -25,12 +25,18 @@ const els = {
   helpDialog: document.getElementById('helpDialog'),
   closeHelp: document.getElementById('closeHelpButton'),
   offlineBadge: document.getElementById('offlineBadge'),
-  celebrationLayer: document.getElementById('celebrationLayer')
+  celebrationLayer: document.getElementById('celebrationLayer'),
+  definitionDialog: document.getElementById('definitionDialog'),
+  definitionTitle: document.getElementById('definitionTitle'),
+  definitionBody: document.getElementById('definitionBody'),
+  definitionExternalLink: document.getElementById('definitionExternalLink'),
+  closeDefinition: document.getElementById('closeDefinitionButton'),
+  definitionDone: document.getElementById('definitionDoneButton')
 };
 
-const STORAGE_PREFIX = 'annagrams-progress-v4:';
-const SIZE_STORAGE_KEY = 'annagrams-selected-size-v4';
-const DIFFICULTY_STORAGE_KEY = 'annagrams-difficulty-v4';
+const STORAGE_PREFIX = 'annagrams-progress-v5:';
+const SIZE_STORAGE_KEY = 'annagrams-selected-size-v5';
+const DIFFICULTY_STORAGE_KEY = 'annagrams-difficulty-v5';
 const MIN_WORD_LENGTH = 3;
 const POINTS = { 3: 1, 4: 2, 5: 4, 6: 7, 7: 11, 8: 16, 9: 25 };
 const DIFFICULTIES = {
@@ -61,6 +67,7 @@ const CELEBRATION_MESSAGES = [
 ];
 const CELEBRATION_TYPES = ['confetti', 'fireworks', 'sparklers', 'party', 'bubbles'];
 const CELEBRATION_COLOURS = ['#2f6f73', '#d59d2a', '#c76545', '#7f5aa2', '#3f7fb7', '#e7c766', '#f28ab2'];
+const DICTIONARY_ENDPOINT = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
 
 function randomChoice(items) { return items[Math.floor(Math.random() * items.length)]; }
 function randomBetween(min, max) { return min + Math.random() * (max - min); }
@@ -188,6 +195,17 @@ function groupedAnswers() {
 }
 function puzzlesForSize(size) { return puzzles.filter(item => puzzleSize(item) === size); }
 function availableSizes() { return [...new Set(puzzles.map(puzzleSize))].sort((a, b) => a - b); }
+function puzzleNumberForSize(item) {
+  const list = puzzlesForSize(puzzleSize(item));
+  const index = list.findIndex(candidate => candidate.id === item.id);
+  return index >= 0 ? index + 1 : 1;
+}
+function puzzleLabel(item = puzzle) {
+  if (!item) return 'Puzzle';
+  const size = puzzleSize(item);
+  const count = puzzlesForSize(size).length;
+  return `${size}-letter puzzle ${puzzleNumberForSize(item)} of ${count}`;
+}
 function dailyPuzzleForSize(size) {
   const list = puzzlesForSize(size);
   return list[todayIndex(list.length)] || puzzles[0];
@@ -276,7 +294,7 @@ function setPuzzle(nextPuzzle, message = '') {
   current = [];
   loadProgress();
   render();
-  setMessage(message || `New ${puzzle.size}-letter puzzle: ${puzzle.title}.`, 'good');
+  setMessage(message || `New ${puzzleLabel()}.`, 'good');
 }
 
 function render() {
@@ -284,7 +302,7 @@ function render() {
   const score = currentScore();
   const scoreTarget = scoreTargetForDifficulty();
   const targetSummary = targetGroupsMet();
-  els.title.textContent = `${puzzle.title} · ${puzzle.size} letters`;
+  els.title.textContent = puzzleLabel();
   els.rule.textContent = `Make words of 3 to ${puzzle.size} letters. Complete by score or by category targets.`;
   els.scoreCount.textContent = score;
   els.scoreTarget.textContent = scoreTarget;
@@ -389,11 +407,14 @@ function renderWordSections() {
       list.appendChild(chip);
     } else {
       for (const word of wordsToShow) {
-        const chip = document.createElement('span');
+        const chip = document.createElement('button');
         const foundClass = found.has(word) ? ' points' : '';
-        chip.className = 'word-chip' + foundClass;
+        chip.type = 'button';
+        chip.className = 'word-chip word-chip-button' + foundClass;
         chip.textContent = word;
-        chip.title = `${wordPoints(word)} points`;
+        chip.title = `${wordPoints(word)} points. Tap for definition.`;
+        chip.setAttribute('aria-label', `Look up ${word}`);
+        chip.addEventListener('click', () => showDefinition(word));
         list.appendChild(chip);
       }
     }
@@ -497,7 +518,7 @@ function chooseDifficulty(key) {
 function pickRandomPuzzle() {
   const choices = puzzlesForSize(selectedSize).filter(p => !puzzle || p.id !== puzzle.id);
   const next = choices[Math.floor(Math.random() * choices.length)] || dailyPuzzleForSize(selectedSize);
-  setPuzzle(next, `Another ${selectedSize}-letter puzzle: ${next.title}.`);
+  setPuzzle(next, `Another ${selectedSize}-letter puzzle is ready.`);
 }
 async function loadPuzzles() {
   const response = await fetch('puzzles.json', { cache: 'no-cache' });
@@ -510,6 +531,82 @@ async function loadPuzzles() {
   if (!DIFFICULTIES[difficultyKey]) difficultyKey = 'standard';
   setPuzzle(dailyPuzzleForSize(selectedSize), `Today’s ${selectedSize}-letter puzzle is ready.`);
 }
+
+function wiktionaryUrl(word) {
+  return `https://en.wiktionary.org/wiki/${encodeURIComponent(word)}`;
+}
+function setDefinitionBody(nodes) {
+  els.definitionBody.innerHTML = '';
+  for (const node of nodes) els.definitionBody.appendChild(node);
+}
+function makeParagraph(text, className = '') {
+  const p = document.createElement('p');
+  if (className) p.className = className;
+  p.textContent = text;
+  return p;
+}
+function makeDefinitionList(entries) {
+  const container = document.createElement('div');
+  let shown = 0;
+  for (const entry of entries || []) {
+    for (const meaning of entry.meanings || []) {
+      const defs = (meaning.definitions || []).filter(item => item && item.definition).slice(0, 2);
+      if (!defs.length) continue;
+      const group = document.createElement('section');
+      group.className = 'definition-group';
+      const heading = document.createElement('h3');
+      heading.textContent = meaning.partOfSpeech || 'definition';
+      group.appendChild(heading);
+      const list = document.createElement('ol');
+      for (const def of defs) {
+        const li = document.createElement('li');
+        li.textContent = def.definition;
+        if (def.example) {
+          const example = document.createElement('p');
+          example.className = 'definition-example';
+          example.textContent = `Example: ${def.example}`;
+          li.appendChild(example);
+        }
+        list.appendChild(li);
+        shown += 1;
+        if (shown >= 5) break;
+      }
+      group.appendChild(list);
+      container.appendChild(group);
+      if (shown >= 5) break;
+    }
+    if (shown >= 5) break;
+  }
+  if (!shown) container.appendChild(makeParagraph('No definition found in the lookup service.', 'definition-note'));
+  return container;
+}
+async function showDefinition(word) {
+  if (!els.definitionDialog) return;
+  const cleanWord = normaliseWord(word);
+  els.definitionTitle.textContent = cleanWord.toUpperCase();
+  els.definitionExternalLink.href = wiktionaryUrl(cleanWord);
+  setDefinitionBody([
+    makeParagraph('Looking up definition…', 'definition-note'),
+    makeParagraph('This uses the internet only when you tap a word.', 'definition-small')
+  ]);
+  els.definitionDialog.showModal();
+  try {
+    const response = await fetch(DICTIONARY_ENDPOINT + encodeURIComponent(cleanWord));
+    if (!response.ok) throw new Error(`Dictionary lookup returned ${response.status}`);
+    const data = await response.json();
+    setDefinitionBody([
+      makeDefinitionList(data),
+      makeParagraph('Definitions are fetched online. The game itself still works offline.', 'definition-small')
+    ]);
+  } catch (error) {
+    console.warn('Definition lookup failed:', error);
+    setDefinitionBody([
+      makeParagraph('Could not fetch a definition. The phone may be offline, or this word may not be in the lookup service.', 'definition-note'),
+      makeParagraph('Use the Wiktionary link below if you want to check it manually.', 'definition-small')
+    ]);
+  }
+}
+
 function wireEvents() {
   els.submit.addEventListener('click', submitCurrent);
   els.backspace.addEventListener('click', backspace);
@@ -521,6 +618,8 @@ function wireEvents() {
   els.newPuzzle.addEventListener('click', pickRandomPuzzle);
   els.help.addEventListener('click', () => els.helpDialog.showModal());
   els.closeHelp.addEventListener('click', () => els.helpDialog.close());
+  els.closeDefinition.addEventListener('click', () => els.definitionDialog.close());
+  els.definitionDone.addEventListener('click', () => els.definitionDialog.close());
 
   window.addEventListener('keydown', event => {
     if (!puzzle || event.ctrlKey || event.metaKey || event.altKey) return;
